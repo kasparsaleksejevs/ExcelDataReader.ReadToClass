@@ -2,7 +2,7 @@
 
 namespace ExcelDataReader.ReadToClass.Mapper
 {
-    internal class ExcelColumnAttribute : Attribute
+    public class ExcelColumnAttribute : Attribute
     {
         public string Name { get; set; }
 

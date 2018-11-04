@@ -2,7 +2,7 @@
 
 namespace ExcelDataReader.ReadToClass.Mapper
 {
-    internal class ExcelTableAttribute : Attribute
+    public class ExcelTableAttribute : Attribute
     {
         private string name = null;
 
