@@ -57,7 +57,13 @@ namespace ExcelDataReader.ReadToClass.Mapper
             var fieldCount = reader.FieldCount;
             var columns = new List<string>();
             for (int i = 0; i < fieldCount; i++)
-                columns.Add(reader.GetString(i));
+            {
+                var columnName = reader.GetString(i);
+                if (!string.IsNullOrEmpty(columnName))
+                    columns.Add(columnName);
+            }
+
+            fieldCount = columns.Count;
 
             object compatableList = Activator.CreateInstance(typeof(List<>).MakeGenericType(tableRowType));
             while (reader.Read())
