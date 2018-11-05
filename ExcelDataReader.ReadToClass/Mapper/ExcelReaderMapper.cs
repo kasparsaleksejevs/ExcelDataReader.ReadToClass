@@ -55,12 +55,12 @@ namespace ExcelDataReader.ReadToClass.Mapper
                 reader.Read();
 
             var fieldCount = reader.FieldCount;
-            var columns = new List<string>();
+            var columns = new List<ExcelColumn>();
             for (int i = 0; i < fieldCount; i++)
             {
                 var columnName = reader.GetString(i);
-                if (!string.IsNullOrEmpty(columnName))
-                    columns.Add(columnName);
+                if (!string.IsNullOrEmpty(columnName) && properties.Any(m => m.ExcelColumnName == columnName))
+                    columns.Add(new ExcelColumn { ColumnIndex = i, ColumnName = columnName });
             }
 
             fieldCount = columns.Count;
@@ -71,11 +71,13 @@ namespace ExcelDataReader.ReadToClass.Mapper
                 // create instance using lambdas:
                 var instance = instanceCreator();
 
-                for (int i = 0; i < fieldCount; i++)
+                for (int i = 0; i < columns.Count; i++)
                 {
+                    var column = columns[i];
+                    var cellValue = reader.GetValue(column.ColumnIndex);
+
                     // set instance properties using lambdas
-                    var cellValue = reader.GetValue(i);
-                    propertyProcessors[columns[i]](instance, cellValue);
+                    propertyProcessors[column.ColumnName](instance, cellValue);
                 }
 
                 listAdder(compatableList, instance);
@@ -93,6 +95,13 @@ namespace ExcelDataReader.ReadToClass.Mapper
         /// <returns>Converted value to the specified type.</returns>
         private static TResult ChangeToType<TResult>(object value)
         {
+            if (value is null)
+                return default(TResult);
+
+            var nullable = Nullable.GetUnderlyingType(typeof(TResult));
+            if (nullable != null)
+                return (TResult)Convert.ChangeType(value, nullable);
+
             return (TResult)Convert.ChangeType(value, typeof(TResult));
         }
 
@@ -107,6 +116,7 @@ namespace ExcelDataReader.ReadToClass.Mapper
         {
             var propertyInfo = propertyContainerType.GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
             var setMethodInfo = propertyInfo.GetSetMethod();
+            //var propertyType = Nullable.GetUnderlyingType(propertyInfo.PropertyType) ?? propertyInfo.PropertyType;
             var propertyType = propertyInfo.PropertyType;
 
             var instanceParam = Expression.Parameter(typeof(object), "containerInstance");
@@ -150,13 +160,12 @@ namespace ExcelDataReader.ReadToClass.Mapper
             return lambda.Compile();
         }
 
-        // https://rogerjohansson.blog/2008/02/28/linq-expressions-creating-objects/
-        // https://vagifabilov.wordpress.com/2010/04/02/dont-use-activator-createinstance-or-constructorinfo-invoke-use-compiled-lambda-expressions/
         /// <summary>
         /// Creates the instance initialization action. 
         /// </summary>
         /// <param name="type">The type.</param>
-        /// <returns>Compiled lambda .</returns>
+        /// <returns>Compiled lambda.</returns>
+        /// <remarks>https://rogerjohansson.blog/2008/02/28/linq-expressions-creating-objects/</remarks>
         private static ClassInstantiator CreateInstanceInitializationAction(Type type)
         {
             ConstructorInfo ctor = type.GetConstructors().First();
@@ -244,6 +253,13 @@ namespace ExcelDataReader.ReadToClass.Mapper
             public Type ListElementType { get; set; }
 
             public string ExcelTableName { get; set; }
+        }
+
+        class ExcelColumn
+        {
+            public int ColumnIndex { get; set; }
+
+            public string ColumnName { get; set; }
         }
     }
 }

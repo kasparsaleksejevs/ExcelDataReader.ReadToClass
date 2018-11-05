@@ -58,6 +58,8 @@
     <Reference Include="System.IO.Compression" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="OneSheetFileSkipColumnsTest.cs" />
+    <Compile Include="OneSheetNullableFileTest.cs" />
     <Compile Include="TestSampleFiles.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -69,6 +71,7 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="Resources\Sample_OneSheet.xlsx" />
+    <None Include="Resources\Sample_OneSheet_Nullable.xlsx" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="TestSampleFiles.resx">

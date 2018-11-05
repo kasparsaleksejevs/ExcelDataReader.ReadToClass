@@ -8,42 +8,35 @@ using System.Linq;
 namespace ExcelDataReader.ReadToClass.Tests
 {
     [TestClass]
-    public class OneSheetFileTest
+    public class OneSheetNullableFileTest
     {
         [TestMethod]
-        public void ProcessOneSheetFile_Has3Rows()
+        public void ProcessOneSheetNullableFile_Has8Rows()
         {
-            var source = TestSampleFiles.Sample_OneSheet;
+            var source = TestSampleFiles.Sample_OneSheet_Nullable;
 
             using (var ms = new MemoryStream(source))
             using (var reader = ExcelReaderFactory.CreateReader(ms))
             {
                 var result = reader.AsClass<OneSheetExcel>();
-                result.FirstSheetRows.Count.ShouldBe(3);
+                result.FirstSheetRows.Count.ShouldBe(7);
             }
         }
 
         [TestMethod]
-        public void ProcessOneSheetFile_HasCorrectData()
+        public void ProcessOneSheetNullableFile_HasCorrectNullableSequence()
         {
-            var source = TestSampleFiles.Sample_OneSheet;
+            var source = TestSampleFiles.Sample_OneSheet_Nullable;
 
             using (var ms = new MemoryStream(source))
             using (var reader = ExcelReaderFactory.CreateReader(ms))
             {
                 var result = reader.AsClass<OneSheetExcel>();
 
-                var targetText = new List<string> { "Data 1", "Data 2", "Other Data" };
-                result.FirstSheetRows.Select(s => s.TextColumn).ShouldBe(targetText);
-
-                var targetInts = new List<int> { 1, 2, 3 };
-                result.FirstSheetRows.Select(s => s.IntColumn).ShouldBe(targetInts);
-
-                var targetDecimals = new List<decimal> { 1.5m, 3m, 4.5m };
-                result.FirstSheetRows.Select(s => s.DecimalColumn).ShouldBe(targetDecimals);
+                var targetResult = new List<int?> { 1, 2, null, 4, 5, null, 7 };
+                result.FirstSheetRows.Select(s => s.NullableIntColumn).ShouldBe(targetResult);
             }
         }
-
 
         public class OneSheetExcel
         {
@@ -61,6 +54,9 @@ namespace ExcelDataReader.ReadToClass.Tests
 
             [ExcelColumn("Decimals", 3)]
             public decimal DecimalColumn { get; set; }
+
+            [ExcelColumn("Nullable ints", 4)]
+            public int? NullableIntColumn { get; set; }
         }
     }
 }
