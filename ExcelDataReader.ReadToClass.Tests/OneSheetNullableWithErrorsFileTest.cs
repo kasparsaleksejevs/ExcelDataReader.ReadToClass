@@ -31,10 +31,12 @@ namespace ExcelDataReader.ReadToClass.Tests
             using (var ms = new MemoryStream(source))
             using (var reader = ExcelReaderFactory.CreateReader(ms))
             {
-                var result = reader.AsClass<OneSheetExcel>();
+                var result = reader.AsClass<OneSheetExcel>(out List<string> errors);
 
                 var targetResult = new List<int?> { 1, null, 3, 4, 5, 6, 7 };
                 result.FirstSheetRows.Select(s => s.NullableIntWithErrColumn).ShouldBe(targetResult);
+
+                errors.Count.ShouldBe(1);
             }
         }
 

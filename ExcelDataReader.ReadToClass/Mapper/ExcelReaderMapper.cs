@@ -70,6 +70,7 @@ namespace ExcelDataReader.ReadToClass.Mapper
             fieldCount = columns.Count;
 
             object compatableList = Activator.CreateInstance(typeof(List<>).MakeGenericType(tableRowType));
+            var row = 2; //we skipped header
             while (reader.Read())
             {
                 // create instance using lambdas:
@@ -81,10 +82,20 @@ namespace ExcelDataReader.ReadToClass.Mapper
                     var cellValue = reader.GetValue(column.ColumnIndex);
 
                     // set instance properties using lambdas
-                    propertyProcessors[column.ColumnName](instance, cellValue);
+                    try
+                    {
+                        propertyProcessors[column.ColumnName](instance, cellValue);
+                    }
+                    catch (FormatException formatException)
+                    {
+                        propertyProcessors[column.ColumnName](instance, null);
+                        this.Errors.Add($"{formatException.Message} - ['{column.ColumnName}':{row}]");
+                    }
+
                 }
 
                 listAdder(compatableList, instance);
+                row++;
             }
 
             return compatableList;
@@ -102,19 +113,11 @@ namespace ExcelDataReader.ReadToClass.Mapper
             if (value is null)
                 return default(TResult);
 
-            try
-            {
-                var nullable = Nullable.GetUnderlyingType(typeof(TResult));
-                if (nullable != null)
-                    return (TResult)Convert.ChangeType(value, nullable);
+            var nullable = Nullable.GetUnderlyingType(typeof(TResult));
+            if (nullable != null)
+                return (TResult)Convert.ChangeType(value, nullable);
 
-                return (TResult)Convert.ChangeType(value, typeof(TResult));
-            }
-            catch (FormatException)
-            {
-                //if (throwOnError) throw else Errors.Add("Error text");
-                return default(TResult);
-            }
+            return (TResult)Convert.ChangeType(value, typeof(TResult));
         }
 
         /// <summary>
