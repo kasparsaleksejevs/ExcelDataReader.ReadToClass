@@ -8,6 +8,8 @@ namespace ExcelDataReader.ReadToClass.Mapper
 {
     internal class ExcelReaderMapper
     {
+        private readonly bool throwOnError = false;
+
         public T ReadAllWorksheets<T>(IExcelDataReader reader) where T : class, new()
         {
             var dataFromExcel = new T();
@@ -33,6 +35,8 @@ namespace ExcelDataReader.ReadToClass.Mapper
 
             return dataFromExcel;
         }
+
+        public List<string> Errors { get; } = new List<string>();
 
         delegate void PropertySetter(object instance, object propertyValue);
         delegate object ClassInstantiator();
@@ -98,11 +102,19 @@ namespace ExcelDataReader.ReadToClass.Mapper
             if (value is null)
                 return default(TResult);
 
-            var nullable = Nullable.GetUnderlyingType(typeof(TResult));
-            if (nullable != null)
-                return (TResult)Convert.ChangeType(value, nullable);
+            try
+            {
+                var nullable = Nullable.GetUnderlyingType(typeof(TResult));
+                if (nullable != null)
+                    return (TResult)Convert.ChangeType(value, nullable);
 
-            return (TResult)Convert.ChangeType(value, typeof(TResult));
+                return (TResult)Convert.ChangeType(value, typeof(TResult));
+            }
+            catch (FormatException)
+            {
+                //if (throwOnError) throw else Errors.Add("Error text");
+                return default(TResult);
+            }
         }
 
         /// <summary>

@@ -79,5 +79,15 @@ namespace ExcelDataReader.ReadToClass.Tests {
                 return ((byte[])(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] Sample_OneSheet_Nullable_WithErrors {
+            get {
+                object obj = ResourceManager.GetObject("Sample_OneSheet_Nullable_WithErrors", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
     }
 }

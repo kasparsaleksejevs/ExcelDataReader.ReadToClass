@@ -59,6 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="OneSheetFileSkipColumnsTest.cs" />
+    <Compile Include="OneSheetNullableWithErrorsFileTest.cs" />
     <Compile Include="OneSheetNullableFileTest.cs" />
     <Compile Include="TestSampleFiles.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -71,6 +72,7 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="Resources\Sample_OneSheet.xlsx" />
+    <None Include="Resources\Sample_OneSheet_Nullable WithErrors.xlsx" />
     <None Include="Resources\Sample_OneSheet_Nullable.xlsx" />
   </ItemGroup>
   <ItemGroup>
