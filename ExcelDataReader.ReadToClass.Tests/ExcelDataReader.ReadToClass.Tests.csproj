@@ -59,6 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="OneSheetFileSkipColumnsTest.cs" />
+    <Compile Include="OneSheetFileFluentTest.cs" />
     <Compile Include="OneSheetNullableWithErrorsFileTest.cs" />
     <Compile Include="OneSheetNullableFileTest.cs" />
     <Compile Include="TestSampleFiles.Designer.cs">

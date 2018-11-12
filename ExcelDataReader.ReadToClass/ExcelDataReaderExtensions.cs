@@ -1,4 +1,5 @@
-﻿using ExcelDataReader.ReadToClass.Mapper;
+﻿using ExcelDataReader.ReadToClass.FluentMapper;
+using ExcelDataReader.ReadToClass.Mapper;
 using System.Collections.Generic;
 
 namespace ExcelDataReader.ReadToClass
@@ -16,9 +17,9 @@ namespace ExcelDataReader.ReadToClass
         /// <param name="reader">The IExcelDataReader instance.</param>
         /// <returns>Class {T} containing all data.</returns>
         /// <remarks>Note that sheet data properties musst be Lists (eg., List{someClass}), row types must have parameterless constructor.</remarks>
-        public static T AsClass<T>(this IExcelDataReader reader) where T : class, new()
+        public static T AsClass<T>(this IExcelDataReader reader, FluentConfig fluentConfig = null) where T : class, new()
         {
-            return new ExcelReaderMapper().ReadAllWorksheets<T>(reader);
+            return new ExcelReaderMapper().ReadAllWorksheets<T>(reader, fluentConfig);
         }
 
         /// <summary>
@@ -26,12 +27,13 @@ namespace ExcelDataReader.ReadToClass
         /// </summary>
         /// <typeparam name="T">Type of class.</typeparam>
         /// <param name="reader">The IExcelDataReader instance.</param>
+        /// <param name="errors">The errors that were encountered during read (invalid format, etc).</param>
         /// <returns>Class {T} containing all data.</returns>
         /// <remarks>Note that sheet data properties musst be Lists (eg., List{someClass}), row types must have parameterless constructor.</remarks>
-        public static T AsClass<T>(this IExcelDataReader reader, out List<string> errors) where T : class, new()
+        public static T AsClass<T>(this IExcelDataReader reader, out List<string> errors, FluentConfig fluentConfig = null) where T : class, new()
         {
             var excelMapper = new ExcelReaderMapper();
-            var data = excelMapper.ReadAllWorksheets<T>(reader);
+            var data = excelMapper.ReadAllWorksheets<T>(reader, fluentConfig);
             errors = excelMapper.Errors;
             return data;
         }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ExcelDataReader.ReadToClass.FluentMapper;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -10,16 +11,19 @@ namespace ExcelDataReader.ReadToClass.Mapper
     {
         private readonly bool throwOnError = false;
 
-        public T ReadAllWorksheets<T>(IExcelDataReader reader) where T : class, new()
+        public T ReadAllWorksheets<T>(IExcelDataReader reader, FluentConfig config = null) where T : class, new()
         {
             var dataFromExcel = new T();
             var sheetProcessors = new Dictionary<string, SheetProcessingData>();
-            var tables = GetTableProperties(typeof(T));
-            foreach (var item in tables)
-            {
-                var listElementType = item.ListElementType;
-                sheetProcessors.Add(item.ExcelTableName, new SheetProcessingData(listElementType, CreateSetPropertyAction(typeof(T), item.PropertyName)));
-            }
+
+            List<TablePropertyData> tables = null;
+            if (config != null)
+                tables = config.Tables;
+            else
+                tables = GetTableProperties(typeof(T));
+
+            foreach (var table in tables)
+                sheetProcessors.Add(table.ExcelTableName, new SheetProcessingData(table, CreateSetPropertyAction(typeof(T), table.PropertyName)));
 
             do
             {
@@ -27,7 +31,7 @@ namespace ExcelDataReader.ReadToClass.Mapper
                 if (sheetProcessors.ContainsKey(worksheetName))
                 {
                     var processor = sheetProcessors[worksheetName];
-                    var result = ProcessTable(reader, processor.RowPropertyType);
+                    var result = ProcessTable(reader, processor.TablePropertyData);
                     processor.PropertySetter(dataFromExcel, result);
                 }
 
@@ -41,17 +45,16 @@ namespace ExcelDataReader.ReadToClass.Mapper
         delegate void PropertySetter(object instance, object propertyValue);
         delegate object ClassInstantiator();
 
-        private object ProcessTable(IExcelDataReader reader, Type tableRowType, bool hasHeader = true)
+        private object ProcessTable(IExcelDataReader reader, TablePropertyData tablePropertyData /*Type tableRowType*/, bool hasHeader = true)
         {
+            var tableRowType = tablePropertyData.ListElementType;
+
             var instanceCreator = CreateInstanceInitializationAction(tableRowType);
             var listAdder = CreateAddToListAction(tableRowType);
 
-            // read all properties and compile set-value lambdas
-            var properties = GetColumnProperties(tableRowType);
-
             ////var propertyProcessors = new Dictionary<string, Action<object, object>>(); // could improve things...
             var propertyProcessors = new Dictionary<string, PropertySetter>();
-            foreach (var property in properties)
+            foreach (var property in tablePropertyData.Columns)
                 propertyProcessors.Add(property.ExcelColumnName, CreateSetPropertyAction(tableRowType, property.PropertyName));
 
             // reading header
@@ -63,7 +66,7 @@ namespace ExcelDataReader.ReadToClass.Mapper
             for (int i = 0; i < fieldCount; i++)
             {
                 var columnName = reader.GetString(i);
-                if (!string.IsNullOrEmpty(columnName) && properties.Any(m => m.ExcelColumnName == columnName))
+                if (!string.IsNullOrEmpty(columnName) && tablePropertyData.Columns.Any(m => m.ExcelColumnName == columnName))
                     columns.Add(new ExcelColumn { ColumnIndex = i, ColumnName = columnName });
             }
 
@@ -226,11 +229,14 @@ namespace ExcelDataReader.ReadToClass.Mapper
                     var excelColumnAttribute = property.GetCustomAttribute<ExcelTableAttribute>(true);
                     if (excelColumnAttribute != null)
                     {
+                        var tableProperties = GetColumnProperties(listElementType);
+
                         lstProperties.Add(new TablePropertyData
                         {
                             PropertyName = property.Name,
                             ExcelTableName = excelColumnAttribute.GetName(),
-                            ListElementType = listElementType
+                            ListElementType = listElementType,
+                            Columns = tableProperties
                         });
                     }
                 }
@@ -241,33 +247,15 @@ namespace ExcelDataReader.ReadToClass.Mapper
 
         class SheetProcessingData
         {
-            public SheetProcessingData(Type rowPropertyType, PropertySetter propertySetter)
+            public SheetProcessingData(TablePropertyData tablePropertyData, PropertySetter propertySetter)
             {
-                this.RowPropertyType = rowPropertyType;
+                this.TablePropertyData = tablePropertyData;
                 this.PropertySetter = propertySetter;
             }
 
-            public Type RowPropertyType { get; set; }
+            public TablePropertyData TablePropertyData { get; set; }
 
             public PropertySetter PropertySetter { get; set; }
-        }
-
-        class ColumnPropertyData
-        {
-            public string PropertyName { get; set; }
-
-            public string ExcelColumnName { get; set; }
-
-            public int Order { get; set; }
-        }
-
-        class TablePropertyData
-        {
-            public string PropertyName { get; set; }
-
-            public Type ListElementType { get; set; }
-
-            public string ExcelTableName { get; set; }
         }
 
         class ExcelColumn
@@ -276,5 +264,25 @@ namespace ExcelDataReader.ReadToClass.Mapper
 
             public string ColumnName { get; set; }
         }
+    }
+
+    public class TablePropertyData
+    {
+        public string PropertyName { get; set; }
+
+        public Type ListElementType { get; set; }
+
+        public string ExcelTableName { get; set; }
+
+        public List<ColumnPropertyData> Columns { get; set; } = new List<ColumnPropertyData>();
+    }
+
+    public class ColumnPropertyData
+    {
+        public string PropertyName { get; set; }
+
+        public string ExcelColumnName { get; set; }
+
+        public int Order { get; set; }
     }
 }

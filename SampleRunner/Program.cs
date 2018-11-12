@@ -1,5 +1,6 @@
 ﻿using ExcelDataReader;
 using ExcelDataReader.ReadToClass;
+using ExcelDataReader.ReadToClass.FluentMapper;
 using ExcelDataReader.ReadToClass.Mapper;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,15 @@ namespace SampleRunner
     {
         static void Main(string[] args)
         {
+            //TestingWithAttributes();
+            TestingFluent();
+
+            Console.WriteLine("== Done! ==");
+            Console.ReadKey();
+        }
+
+        static void TestingWithAttributes()
+        {
             var source = Resource1.Sample_OneSheet;
 
             using (var ms = new MemoryStream(source))
@@ -19,9 +29,29 @@ namespace SampleRunner
                 var result = reader.AsClass<OneSheetExcel>();
                 Console.WriteLine("Rows: " + result.FirstSheetRows.Count.ToString());
             }
+        }
 
-            Console.WriteLine("== Done! ==");
-            Console.ReadKey();
+        static void TestingFluent()
+        {
+            var source = Resource1.Sample_OneSheet;
+
+            using (var ms = new MemoryStream(source))
+            using (var reader = ExcelReaderFactory.CreateReader(ms))
+            {
+                FluentConfig config = new FluentConfig();
+                config.ConfigureFor<OneSheetExcel>().Tables(table =>
+                {
+                    table.Bind("My Sheet 1", m => m.FirstSheetRows).WithColumns(column =>
+                    {
+                        column.Bind("Text Column", c => c.TextColumn);
+                        column.Bind("Some Int", c => c.IntColumn);
+                        column.Bind("Decimals", c => c.DecimalColumn);
+                    });
+                });
+
+                var result = reader.AsClass<OneSheetExcel>(config);
+                Console.WriteLine("Rows: " + result.FirstSheetRows.Count.ToString());
+            }
         }
     }
 
