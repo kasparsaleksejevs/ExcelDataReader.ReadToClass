@@ -38,8 +38,7 @@ namespace SampleRunner
             using (var ms = new MemoryStream(source))
             using (var reader = ExcelReaderFactory.CreateReader(ms))
             {
-                FluentConfig config = new FluentConfig();
-                config.ConfigureFor<OneSheetExcel>().Tables(table =>
+                var config = FluentConfig.ConfigureFor<OneSheetExcel>().WithTables(table =>
                 {
                     table.Bind("My Sheet 1", m => m.FirstSheetRows).WithColumns(column =>
                     {

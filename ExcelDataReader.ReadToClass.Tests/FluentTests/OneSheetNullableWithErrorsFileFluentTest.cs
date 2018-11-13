@@ -5,84 +5,81 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace ExcelDataReader.ReadToClass.Tests
+namespace ExcelDataReader.ReadToClass.Tests.FluentTests
 {
     [TestClass]
-    public class OneSheetFileFluentTest
+    public class OneSheetNullableWithErrorsFileFluentTest
     {
         [TestMethod]
-        public void ProcessOneSheetFile_Has3Rows()
+        public void ProcessOneSheetNullableFile_Has8Rows()
         {
-            var source = TestSampleFiles.Sample_OneSheet;
+            var source = TestSampleFiles.Sample_OneSheet_Nullable_WithErrors;
 
             using (var ms = new MemoryStream(source))
             using (var reader = ExcelReaderFactory.CreateReader(ms))
             {
-                FluentConfig config = new FluentConfig();
-                config.ConfigureFor<OneSheetExcel>().Tables(table =>
+                var config = FluentConfig.ConfigureFor<OneSheetExcel>().WithTables(table =>
                 {
                     table.Bind("My Sheet 1", m => m.FirstSheetRows).WithColumns(column =>
                     {
                         column.Bind("Text Column", c => c.TextColumn);
                         column.Bind("Some Int", c => c.IntColumn);
                         column.Bind("Decimals", c => c.DecimalColumn);
+                        column.Bind("Nullable ints", c => c.NullableIntColumn);
+                        column.Bind("Nullable ints with err", c => c.NullableIntWithErrColumn);
                     });
                 });
 
                 var result = reader.AsClass<OneSheetExcel>(config);
-                result.FirstSheetRows.Count.ShouldBe(3);
+                result.FirstSheetRows.Count.ShouldBe(7);
             }
         }
 
         [TestMethod]
-        public void ProcessOneSheetFile_HasCorrectData()
+        public void ProcessOneSheetNullableFile_HasCorrectNullableSequence()
         {
-            var source = TestSampleFiles.Sample_OneSheet;
+            var source = TestSampleFiles.Sample_OneSheet_Nullable_WithErrors;
 
             using (var ms = new MemoryStream(source))
             using (var reader = ExcelReaderFactory.CreateReader(ms))
             {
-                FluentConfig config = new FluentConfig();
-                config.ConfigureFor<OneSheetExcel>().Tables(table =>
+                var config = FluentConfig.ConfigureFor<OneSheetExcel>().WithTables(table =>
                 {
                     table.Bind("My Sheet 1", m => m.FirstSheetRows).WithColumns(column =>
                     {
                         column.Bind("Text Column", c => c.TextColumn);
                         column.Bind("Some Int", c => c.IntColumn);
                         column.Bind("Decimals", c => c.DecimalColumn);
+                        column.Bind("Nullable ints", c => c.NullableIntColumn);
+                        column.Bind("Nullable ints with err", c => c.NullableIntWithErrColumn);
                     });
                 });
 
-                var result = reader.AsClass<OneSheetExcel>(config);
+                var result = reader.AsClass<OneSheetExcel>(out List<string> errors, config);
 
-                var targetText = new List<string> { "Data 1", "Data 2", "Other Data" };
-                result.FirstSheetRows.Select(s => s.TextColumn).ShouldBe(targetText);
+                var targetResult = new List<int?> { 1, null, 3, 4, 5, 6, 7 };
+                result.FirstSheetRows.Select(s => s.NullableIntWithErrColumn).ShouldBe(targetResult);
 
-                var targetInts = new List<int> { 1, 2, 3 };
-                result.FirstSheetRows.Select(s => s.IntColumn).ShouldBe(targetInts);
-
-                var targetDecimals = new List<decimal> { 1.5m, 3m, 4.5m };
-                result.FirstSheetRows.Select(s => s.DecimalColumn).ShouldBe(targetDecimals);
+                errors.Count.ShouldBe(1);
             }
         }
-
 
         public class OneSheetExcel
         {
-            //[ExcelTable("My Sheet 1")]
             public List<FirstSheet> FirstSheetRows { get; set; }
         }
 
         public class FirstSheet
         {
-            //[ExcelColumn("Text Column", 1)]
             public string TextColumn { get; set; }
 
-            //[ExcelColumn("Some Int", 2)]
             public int IntColumn { get; set; }
 
-            //[ExcelColumn("Decimals", 3)]
             public decimal DecimalColumn { get; set; }
+
+            public int? NullableIntColumn { get; set; }
+
+            public int? NullableIntWithErrColumn { get; set; }
         }
     }
 }

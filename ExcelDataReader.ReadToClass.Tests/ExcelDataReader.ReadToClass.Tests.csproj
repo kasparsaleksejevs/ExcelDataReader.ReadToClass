@@ -58,8 +58,10 @@
     <Reference Include="System.IO.Compression" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FluentTests\OneSheetNullableFileFluentTest.cs" />
+    <Compile Include="FluentTests\OneSheetNullableWithErrorsFileFluentTest.cs" />
     <Compile Include="OneSheetFileSkipColumnsTest.cs" />
-    <Compile Include="OneSheetFileFluentTest.cs" />
+    <Compile Include="FluentTests\OneSheetFileFluentTest.cs" />
     <Compile Include="OneSheetNullableWithErrorsFileTest.cs" />
     <Compile Include="OneSheetNullableFileTest.cs" />
     <Compile Include="TestSampleFiles.Designer.cs">

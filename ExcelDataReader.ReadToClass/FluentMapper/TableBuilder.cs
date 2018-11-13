@@ -6,34 +6,6 @@ using System.Reflection;
 
 namespace ExcelDataReader.ReadToClass.FluentMapper
 {
-    public class FluentConfig
-    {
-        internal List<TablePropertyData> Tables { get; set; } = new List<TablePropertyData>();
-
-        public ContainerBuilder<TModel> ConfigureFor<TModel>() where TModel : class
-        {
-            return new ContainerBuilder<TModel>(this);
-        }
-    }
-
-    public class ContainerBuilder<TModel> where TModel : class
-    {
-        internal FluentConfig config;
-
-        internal ContainerBuilder(FluentConfig config)
-        {
-            this.config = config;
-        }
-
-        public void Tables(Action<TableBuilder<TModel>> tableBuilder)
-        {
-            var builder = new TableBuilder<TModel>(this);
-            tableBuilder.Invoke(builder);
-
-            config.Tables = builder.tables;
-        }
-    }
-
     public class TableBuilder<TModel> where TModel : class
     {
         private readonly ContainerBuilder<TModel> containerBuilder;
@@ -65,49 +37,6 @@ namespace ExcelDataReader.ReadToClass.FluentMapper
 
             var tableColumnBuilder = new TableColumnBuilder<TProperty>(tableData);
             return tableColumnBuilder;
-        }
-    }
-
-    public class TableColumnBuilder<TModel> where TModel : class
-    {
-        internal List<ColumnPropertyData> columnProperties = new List<ColumnPropertyData>();
-
-        private readonly TablePropertyData tableData;
-
-        public TableColumnBuilder(TablePropertyData tableData)
-        {
-            this.tableData = tableData;
-        }
-
-        public void WithColumns(Action<ColumnBuilder<TModel>> builder)
-        {
-            var columnBuilder = new ColumnBuilder<TModel>(this);
-            builder.Invoke(columnBuilder);
-
-            tableData.Columns.AddRange(columnProperties);
-        }
-    }
-
-    public class ColumnBuilder<TModel> where TModel : class
-    {
-        private readonly TableColumnBuilder<TModel> tableColumnBuilder;
-
-        internal ColumnBuilder(TableColumnBuilder<TModel> tableColumnBuilder)
-        {
-            this.tableColumnBuilder = tableColumnBuilder;
-        }
-
-        public void Bind<TProperty>(string columnNameInExcel, Expression<Func<TModel, TProperty>> expression)
-        {
-            var columnProperty = (expression.Body as MemberExpression).Member as PropertyInfo;
-            var propertyData = new ColumnPropertyData
-            {
-                ExcelColumnName = columnNameInExcel,
-                PropertyName = columnProperty.Name,
-                Order = 1,
-            };
-
-            this.tableColumnBuilder.columnProperties.Add(propertyData);
         }
     }
 }
