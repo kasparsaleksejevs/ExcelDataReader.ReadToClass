@@ -20,7 +20,7 @@ namespace ExcelDataReader.ReadToClass.Tests.FluentTests
             {
                 var config = FluentConfig.ConfigureFor<OneSheetExcel>().WithTables(table =>
                 {
-                    table.Bind("My Sheet 1", m => m.FirstSheetRows).WithColumns(column =>
+                    table.Bind("My Sheet 1", m => m.FirstSheetRows).WithColumnsByHeader(column =>
                     {
                         column.Bind("Text Column", c => c.TextColumn);
                         column.Bind("Some Int", c => c.IntColumn);
@@ -45,7 +45,7 @@ namespace ExcelDataReader.ReadToClass.Tests.FluentTests
             {
                 var config = FluentConfig.ConfigureFor<OneSheetExcel>().WithTables(table =>
                 {
-                    table.Bind("My Sheet 1", m => m.FirstSheetRows).WithColumns(column =>
+                    table.Bind("My Sheet 1", m => m.FirstSheetRows).WithColumnsByHeader(column =>
                     {
                         column.Bind("Text Column", c => c.TextColumn);
                         column.Bind("Some Int", c => c.IntColumn);

@@ -14,9 +14,18 @@ namespace ExcelDataReader.ReadToClass.FluentMapping
             this.tableData = tableData;
         }
 
-        public void WithColumns(Action<ColumnBuilder<TModel>> builder)
+        public void WithColumnsByHeader(Action<ColumnBuilderByHeader<TModel>> builder)
         {
-            var columnBuilder = new ColumnBuilder<TModel>(this);
+            var columnBuilder = new ColumnBuilderByHeader<TModel>(this);
+            builder.Invoke(columnBuilder);
+
+            tableData.Columns.AddRange(columnProperties);
+        }
+
+
+        public void WithColumnsByIndex(Action<ColumnBuilderByIndex<TModel>> builder)
+        {
+            var columnBuilder = new ColumnBuilderByIndex<TModel>(this);
             builder.Invoke(columnBuilder);
 
             tableData.Columns.AddRange(columnProperties);

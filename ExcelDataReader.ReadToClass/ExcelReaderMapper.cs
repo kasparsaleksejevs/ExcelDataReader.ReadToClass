@@ -53,7 +53,8 @@ namespace ExcelDataReader.ReadToClass
             var instanceCreator = CreateInstanceInitializationAction(tableRowType);
             var listAdder = CreateAddToListAction(tableRowType);
 
-            ////var propertyProcessors = new Dictionary<string, Action<object, object>>(); // could improve things...
+            //tablePropertyData.Columns
+
             var propertyProcessors = new Dictionary<string, PropertySetter>();
             foreach (var property in tablePropertyData.Columns)
                 propertyProcessors.Add(property.ExcelColumnName, CreateSetPropertyAction(tableRowType, property.PropertyName));
@@ -63,15 +64,15 @@ namespace ExcelDataReader.ReadToClass
                 reader.Read();
 
             var fieldCount = reader.FieldCount;
-            var columns = new List<ExcelColumn>();
+            var columnsToRead = new List<ExcelColumn>();
             for (int i = 0; i < fieldCount; i++)
             {
                 var columnName = reader.GetString(i);
                 if (!string.IsNullOrEmpty(columnName) && tablePropertyData.Columns.Any(m => m.ExcelColumnName == columnName))
-                    columns.Add(new ExcelColumn { ColumnIndex = i, ColumnName = columnName });
+                    columnsToRead.Add(new ExcelColumn { ColumnIndex = i, ColumnName = columnName });
             }
 
-            fieldCount = columns.Count;
+            fieldCount = columnsToRead.Count;
 
             object compatableList = Activator.CreateInstance(typeof(List<>).MakeGenericType(tableRowType));
             var row = 2; //we skipped header
@@ -80,20 +81,20 @@ namespace ExcelDataReader.ReadToClass
                 // create instance using lambdas:
                 var instance = instanceCreator();
 
-                for (int i = 0; i < columns.Count; i++)
+                for (int i = 0; i < columnsToRead.Count; i++)
                 {
-                    var column = columns[i];
-                    var cellValue = reader.GetValue(column.ColumnIndex);
+                    var columnToRead = columnsToRead[i];
+                    var cellValue = reader.GetValue(columnToRead.ColumnIndex);
 
                     // set instance properties using lambdas
                     try
                     {
-                        propertyProcessors[column.ColumnName](instance, cellValue);
+                        propertyProcessors[columnToRead.ColumnName](instance, cellValue);
                     }
                     catch (FormatException formatException)
                     {
-                        propertyProcessors[column.ColumnName](instance, null);
-                        this.Errors.Add($"{formatException.Message} - ['{column.ColumnName}':{row}]");
+                        propertyProcessors[columnToRead.ColumnName](instance, null);
+                        this.Errors.Add($"{formatException.Message} - ['{columnToRead.ColumnName}':{row}]");
                     }
 
                 }
@@ -306,5 +307,36 @@ namespace ExcelDataReader.ReadToClass
         public string PropertyName { get; set; }
 
         public string ExcelColumnName { get; set; }
+
+        public bool ExcelColumnIsIndex { get; set; }
+
+        public int Order { get; set; }
+
+        /// <summary>
+        /// Gets the column letters from numeric index.
+        /// E.g., A=1, BDJ=1466 .
+        /// </summary>
+        /// <param name="columnNr">The column letters.</param>
+        public static int GetColumnIndexFromLetters(string columnLetters)
+        {
+            // A=1, IV=256, PC=419, BDJ=1466 
+            columnLetters = columnLetters.ToUpper();
+            const int letterA = 'A' - 1;
+            const int letterBase = 26;
+
+
+            var result = 0;
+            for (int i = 0; i < columnLetters.Length; i++)
+            {
+                var power = 1;
+                for (int j = 0; j < columnLetters.Length - i - 1; j++)
+                    power *= letterBase;
+
+                result += (columnLetters[i] - letterA) * power;
+
+            }
+
+            return result;
+        }
     }
 }

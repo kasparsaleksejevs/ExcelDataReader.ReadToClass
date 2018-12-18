@@ -58,6 +58,7 @@
     <Reference Include="System.IO.Compression" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ColumnPropertyTest.cs" />
     <Compile Include="FluentTests\OneSheetNullableFileFluentTest.cs" />
     <Compile Include="FluentTests\OneSheetNullableWithErrorsFileFluentTest.cs" />
     <Compile Include="AttributeTests\OneSheetFileSkipColumnsTest.cs" />
