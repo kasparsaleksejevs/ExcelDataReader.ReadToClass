@@ -1,10 +1,9 @@
-﻿using ExcelDataReader.ReadToClass.Mapper;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace ExcelDataReader.ReadToClass.FluentMapper
+namespace ExcelDataReader.ReadToClass.FluentMapping
 {
     public class TableBuilder<TModel> where TModel : class
     {

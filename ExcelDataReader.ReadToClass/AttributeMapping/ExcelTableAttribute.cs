@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ExcelDataReader.ReadToClass.Mapper
+namespace ExcelDataReader.ReadToClass.AttributeMapping
 {
     public class ExcelTableAttribute : Attribute
     {

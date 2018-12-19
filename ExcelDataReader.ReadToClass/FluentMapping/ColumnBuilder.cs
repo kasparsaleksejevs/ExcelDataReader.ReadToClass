@@ -1,9 +1,8 @@
-﻿using ExcelDataReader.ReadToClass.Mapper;
-using System;
+﻿using System;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace ExcelDataReader.ReadToClass.FluentMapper
+namespace ExcelDataReader.ReadToClass.FluentMapping
 {
     public class ColumnBuilder<TModel> where TModel : class
     {
@@ -21,7 +20,6 @@ namespace ExcelDataReader.ReadToClass.FluentMapper
             {
                 ExcelColumnName = columnNameInExcel,
                 PropertyName = columnProperty.Name,
-                Order = 1,
             };
 
             this.tableColumnBuilder.columnProperties.Add(propertyData);

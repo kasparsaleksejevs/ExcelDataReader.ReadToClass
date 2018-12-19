@@ -1,19 +1,19 @@
-﻿using ExcelDataReader.ReadToClass.Mapper;
+﻿using ExcelDataReader.ReadToClass.AttributeMapping;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace ExcelDataReader.ReadToClass.Tests
+namespace ExcelDataReader.ReadToClass.Tests.AttributeTests
 {
     [TestClass]
-    public class OneSheetNullableWithErrorsFileTest
+    public class OneSheetNullableFileTest
     {
         [TestMethod]
         public void ProcessOneSheetNullableFile_Has8Rows()
         {
-            var source = TestSampleFiles.Sample_OneSheet_Nullable_WithErrors;
+            var source = TestSampleFiles.Sample_OneSheet_Nullable;
 
             using (var ms = new MemoryStream(source))
             using (var reader = ExcelReaderFactory.CreateReader(ms))
@@ -26,17 +26,18 @@ namespace ExcelDataReader.ReadToClass.Tests
         [TestMethod]
         public void ProcessOneSheetNullableFile_HasCorrectNullableSequence()
         {
-            var source = TestSampleFiles.Sample_OneSheet_Nullable_WithErrors;
+            var source = TestSampleFiles.Sample_OneSheet_Nullable;
 
             using (var ms = new MemoryStream(source))
             using (var reader = ExcelReaderFactory.CreateReader(ms))
             {
-                var result = reader.AsClass<OneSheetExcel>(out List<string> errors);
+                var result = reader.AsClass<OneSheetExcel>();
 
-                var targetResult = new List<int?> { 1, null, 3, 4, 5, 6, 7 };
-                result.FirstSheetRows.Select(s => s.NullableIntWithErrColumn).ShouldBe(targetResult);
+                var targetResult = new List<int?> { 1, 2, null, 4, 5, null, 7 };
+                result.FirstSheetRows.Select(s => s.NullableIntColumn).ShouldBe(targetResult);
 
-                errors.Count.ShouldBe(1);
+                var targetEnumResult = new List<MyEnum?> { MyEnum.Val1, MyEnum.Val2, MyEnum.Val2, null, MyEnum.Val1, MyEnum.Val1, MyEnum.Val1 };
+                result.FirstSheetRows.Select(s => s.NullableEnumColumn).ShouldBe(targetEnumResult);
             }
         }
 
@@ -48,20 +49,26 @@ namespace ExcelDataReader.ReadToClass.Tests
 
         public class FirstSheet
         {
-            [ExcelColumn("Text Column", 1)]
+            [ExcelColumn("Text Column")]
             public string TextColumn { get; set; }
 
-            [ExcelColumn("Some Int", 2)]
+            [ExcelColumn("Some Int")]
             public int IntColumn { get; set; }
 
-            [ExcelColumn("Decimals", 3)]
+            [ExcelColumn("Decimals")]
             public decimal DecimalColumn { get; set; }
 
-            [ExcelColumn("Nullable ints", 4)]
+            [ExcelColumn("Nullable ints")]
             public int? NullableIntColumn { get; set; }
 
-            [ExcelColumn("Nullable ints with err", 5)]
-            public int? NullableIntWithErrColumn { get; set; }
+            [ExcelColumn("Nullable Enums")]
+            public MyEnum? NullableEnumColumn { get; set; }
+        }
+
+        public enum MyEnum
+        {
+            Val1 = 1,
+            Val2 = 2,
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using ExcelDataReader.ReadToClass.FluentMapper;
-using ExcelDataReader.ReadToClass.Mapper;
+﻿using ExcelDataReader.ReadToClass.FluentMapping;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 using System.Collections.Generic;
@@ -27,6 +26,7 @@ namespace ExcelDataReader.ReadToClass.Tests.FluentTests
                         column.Bind("Some Int", c => c.IntColumn);
                         column.Bind("Decimals", c => c.DecimalColumn);
                         column.Bind("Nullable ints", c => c.NullableIntColumn);
+                        column.Bind("Nullable Enums", c => c.NullableEnumColumn);
                     });
                 });
 
@@ -51,6 +51,7 @@ namespace ExcelDataReader.ReadToClass.Tests.FluentTests
                         column.Bind("Some Int", c => c.IntColumn);
                         column.Bind("Decimals", c => c.DecimalColumn);
                         column.Bind("Nullable ints", c => c.NullableIntColumn);
+                        column.Bind("Nullable Enums", c => c.NullableEnumColumn);
                     });
                 });
 
@@ -58,28 +59,34 @@ namespace ExcelDataReader.ReadToClass.Tests.FluentTests
 
                 var targetResult = new List<int?> { 1, 2, null, 4, 5, null, 7 };
                 result.FirstSheetRows.Select(s => s.NullableIntColumn).ShouldBe(targetResult);
+
+                var targetEnumResult = new List<MyEnum?> { MyEnum.Val1, MyEnum.Val2, MyEnum.Val2, null, MyEnum.Val1, MyEnum.Val1, MyEnum.Val1 };
+                result.FirstSheetRows.Select(s => s.NullableEnumColumn).ShouldBe(targetEnumResult);
             }
         }
 
         public class OneSheetExcel
         {
-            [ExcelTable("My Sheet 1")]
             public List<FirstSheet> FirstSheetRows { get; set; }
         }
 
         public class FirstSheet
         {
-            [ExcelColumn("Text Column", 1)]
             public string TextColumn { get; set; }
 
-            [ExcelColumn("Some Int", 2)]
             public int IntColumn { get; set; }
 
-            [ExcelColumn("Decimals", 3)]
             public decimal DecimalColumn { get; set; }
 
-            [ExcelColumn("Nullable ints", 4)]
             public int? NullableIntColumn { get; set; }
+
+            public MyEnum? NullableEnumColumn { get; set; }
+        }
+
+        public enum MyEnum
+        {
+            Val1 = 1,
+            Val2 = 2,
         }
     }
 }

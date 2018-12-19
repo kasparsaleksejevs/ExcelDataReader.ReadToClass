@@ -1,4 +1,4 @@
-﻿using ExcelDataReader.ReadToClass.FluentMapper;
+﻿using ExcelDataReader.ReadToClass.FluentMapping;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 using System.Collections.Generic;
@@ -25,6 +25,8 @@ namespace ExcelDataReader.ReadToClass.Tests.FluentTests
                         column.Bind("Text Column", c => c.TextColumn);
                         column.Bind("Some Int", c => c.IntColumn);
                         column.Bind("Decimals", c => c.DecimalColumn);
+                        column.Bind("Enums", c => c.EnumColumn);
+                        column.Bind("Str Enums", c => c.StringEnumColumn);
                     });
                 });
 
@@ -64,23 +66,55 @@ namespace ExcelDataReader.ReadToClass.Tests.FluentTests
             }
         }
 
+        [TestMethod]
+        public void ProcessOneSheetFile_HasCorrectEnums()
+        {
+            var source = TestSampleFiles.Sample_OneSheet;
+
+            using (var ms = new MemoryStream(source))
+            using (var reader = ExcelReaderFactory.CreateReader(ms))
+            {
+                var config = FluentConfig.ConfigureFor<OneSheetExcel>().WithTables(table =>
+                {
+                    table.Bind("My Sheet 1", m => m.FirstSheetRows).WithColumns(column =>
+                    {
+                        column.Bind("Enums", c => c.EnumColumn);
+                        column.Bind("Str Enums", c => c.StringEnumColumn);
+                    });
+                });
+
+                var result = reader.AsClass<OneSheetExcel>(config);
+
+                var targetEnums = new List<MyEnum> { MyEnum.Value1, MyEnum.Value1, MyEnum.OtherEnum };
+                result.FirstSheetRows.Select(s => s.EnumColumn).ShouldBe(targetEnums);
+
+                var targetStringEnums = new List<MyEnum> { MyEnum.Value1, MyEnum.OtherEnum, MyEnum.Value1 };
+                result.FirstSheetRows.Select(s => s.StringEnumColumn).ShouldBe(targetStringEnums);
+            }
+        }
 
         public class OneSheetExcel
         {
-            //[ExcelTable("My Sheet 1")]
             public List<FirstSheet> FirstSheetRows { get; set; }
         }
 
         public class FirstSheet
         {
-            //[ExcelColumn("Text Column", 1)]
             public string TextColumn { get; set; }
 
-            //[ExcelColumn("Some Int", 2)]
             public int IntColumn { get; set; }
 
-            //[ExcelColumn("Decimals", 3)]
             public decimal DecimalColumn { get; set; }
+
+            public MyEnum EnumColumn { get; set; }
+
+            public MyEnum StringEnumColumn { get; set; }
+        }
+
+        public enum MyEnum
+        {
+            Value1 = 1,
+            OtherEnum = 2,
         }
     }
 }

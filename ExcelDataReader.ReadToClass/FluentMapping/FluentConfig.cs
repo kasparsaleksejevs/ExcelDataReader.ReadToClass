@@ -1,7 +1,6 @@
-﻿using ExcelDataReader.ReadToClass.Mapper;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace ExcelDataReader.ReadToClass.FluentMapper
+namespace ExcelDataReader.ReadToClass.FluentMapping
 {
     public class FluentConfig
     {

@@ -1,8 +1,7 @@
-﻿using ExcelDataReader.ReadToClass.Mapper;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-namespace ExcelDataReader.ReadToClass.FluentMapper
+namespace ExcelDataReader.ReadToClass.FluentMapping
 {
     public class TableColumnBuilder<TModel> where TModel : class
     {

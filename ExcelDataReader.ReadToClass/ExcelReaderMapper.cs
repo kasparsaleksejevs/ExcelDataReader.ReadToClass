@@ -1,11 +1,12 @@
-﻿using ExcelDataReader.ReadToClass.FluentMapper;
+﻿using ExcelDataReader.ReadToClass.AttributeMapping;
+using ExcelDataReader.ReadToClass.FluentMapping;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace ExcelDataReader.ReadToClass.Mapper
+namespace ExcelDataReader.ReadToClass
 {
     internal class ExcelReaderMapper
     {
@@ -118,7 +119,18 @@ namespace ExcelDataReader.ReadToClass.Mapper
 
             var nullable = Nullable.GetUnderlyingType(typeof(TResult));
             if (nullable != null)
+            {
+                // nullable enums are handled in expressions, here we convert all other types
                 return (TResult)Convert.ChangeType(value, nullable);
+            }
+
+            if (typeof(TResult).IsEnum)
+            {
+                if (value is string stringValue)
+                    return (TResult)Enum.Parse(typeof(TResult), stringValue);
+
+                return (TResult)Convert.ChangeType(value, typeof(int));
+            }
 
             return (TResult)Convert.ChangeType(value, typeof(TResult));
         }
@@ -148,13 +160,26 @@ namespace ExcelDataReader.ReadToClass.Mapper
             //    value = Expression.Convert(valueParam, propertyType);
             //var callExpr = Expression.Call(instance, setMethodInfo, value);
 
-            var changeTypeMethod = typeof(ExcelReaderMapper).GetMethod(nameof(ChangeToType), BindingFlags.NonPublic | BindingFlags.Static);
-            var changeTypeMethodGeneric = changeTypeMethod.MakeGenericMethod(propertyType);
-            var changeTypeExpr = Expression.Call(changeTypeMethodGeneric, valueParam);
-            var callExpr = Expression.Call(instance, setMethodInfo, changeTypeExpr);
-
-            var lambda = Expression.Lambda<PropertySetter>(callExpr, instanceParam, valueParam);
-            return lambda.Compile();
+            var nullableUnderlyingType = Nullable.GetUnderlyingType(propertyType);
+            if (nullableUnderlyingType != null && nullableUnderlyingType.IsEnum)
+            {
+                // IF (valueParam is null) THEN do_not_set_anything ELSE set_as_nullable_value
+                var changeTypeMethod = typeof(ExcelReaderMapper).GetMethod(nameof(ChangeToType), BindingFlags.NonPublic | BindingFlags.Static);
+                var changeTypeMethodGeneric = changeTypeMethod.MakeGenericMethod(nullableUnderlyingType);
+                var changeTypeExpr = Expression.Call(changeTypeMethodGeneric, valueParam);
+                var setPropertyExpression = Expression.Call(instance, setMethodInfo, Expression.Convert(changeTypeExpr, propertyType));
+                var emptyLambda = Expression.Empty();
+                var checkExpr = Expression.IfThenElse(Expression.Equal(Expression.Constant(null, typeof(object)), valueParam), emptyLambda, setPropertyExpression);
+                return Expression.Lambda<PropertySetter>(checkExpr, instanceParam, valueParam).Compile();
+            }
+            else
+            {
+                var changeTypeMethod = typeof(ExcelReaderMapper).GetMethod(nameof(ChangeToType), BindingFlags.NonPublic | BindingFlags.Static);
+                var changeTypeMethodGeneric = changeTypeMethod.MakeGenericMethod(propertyType);
+                var changeTypeExpr = Expression.Call(changeTypeMethodGeneric, valueParam);
+                var setPropertyExpression = Expression.Call(instance, setMethodInfo, changeTypeExpr);
+                return Expression.Lambda<PropertySetter>(setPropertyExpression, instanceParam, valueParam).Compile();
+            }
         }
 
         /// <summary>
@@ -207,12 +232,11 @@ namespace ExcelDataReader.ReadToClass.Mapper
                     {
                         PropertyName = property.Name,
                         ExcelColumnName = excelColumnAttribute.Name,
-                        Order = excelColumnAttribute.Order
                     });
                 }
             }
 
-            return lstProperties.OrderBy(m => m.Order).ToList();
+            return lstProperties;
         }
 
         private static List<TablePropertyData> GetTableProperties(Type type)
@@ -282,7 +306,5 @@ namespace ExcelDataReader.ReadToClass.Mapper
         public string PropertyName { get; set; }
 
         public string ExcelColumnName { get; set; }
-
-        public int Order { get; set; }
     }
 }

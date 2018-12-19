@@ -60,16 +60,16 @@
   <ItemGroup>
     <Compile Include="FluentTests\OneSheetNullableFileFluentTest.cs" />
     <Compile Include="FluentTests\OneSheetNullableWithErrorsFileFluentTest.cs" />
-    <Compile Include="OneSheetFileSkipColumnsTest.cs" />
+    <Compile Include="AttributeTests\OneSheetFileSkipColumnsTest.cs" />
     <Compile Include="FluentTests\OneSheetFileFluentTest.cs" />
-    <Compile Include="OneSheetNullableWithErrorsFileTest.cs" />
-    <Compile Include="OneSheetNullableFileTest.cs" />
+    <Compile Include="AttributeTests\OneSheetNullableWithErrorsFileTest.cs" />
+    <Compile Include="AttributeTests\OneSheetNullableFileTest.cs" />
     <Compile Include="TestSampleFiles.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>TestSampleFiles.resx</DependentUpon>
     </Compile>
-    <Compile Include="OneSheetFileTest.cs" />
+    <Compile Include="AttributeTests\OneSheetFileTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
