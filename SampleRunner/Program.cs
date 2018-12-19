@@ -1,7 +1,7 @@
 ﻿using ExcelDataReader;
 using ExcelDataReader.ReadToClass;
-using ExcelDataReader.ReadToClass.FluentMapper;
-using ExcelDataReader.ReadToClass.Mapper;
+using ExcelDataReader.ReadToClass.AttributeMapping;
+using ExcelDataReader.ReadToClass.FluentMapping;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -62,13 +62,13 @@ namespace SampleRunner
 
     public class FirstSheet
     {
-        [ExcelColumn("Text Column", 1)]
+        [ExcelColumn("Text Column")]
         public string TextColumn { get; set; }
 
-        [ExcelColumn("Some Int", 2)]
+        [ExcelColumn("Some Int")]
         public int IntColumn { get; set; }
 
-        [ExcelColumn("Decimals", 3)]
+        [ExcelColumn("Decimals")]
         public decimal DecimalColumn { get; set; }
     }
 }

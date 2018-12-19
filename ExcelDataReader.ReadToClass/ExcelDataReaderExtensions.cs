@@ -1,5 +1,4 @@
-﻿using ExcelDataReader.ReadToClass.FluentMapper;
-using ExcelDataReader.ReadToClass.Mapper;
+﻿using ExcelDataReader.ReadToClass.FluentMapping;
 using System.Collections.Generic;
 
 namespace ExcelDataReader.ReadToClass

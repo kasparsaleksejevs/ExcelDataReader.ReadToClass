@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ExcelDataReader.ReadToClass.FluentMapper
+namespace ExcelDataReader.ReadToClass.FluentMapping
 {
     public class ContainerBuilder<TModel> where TModel : class
     {

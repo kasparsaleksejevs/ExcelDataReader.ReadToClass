@@ -1,4 +1,4 @@
-﻿using ExcelDataReader.ReadToClass.FluentMapper;
+﻿using ExcelDataReader.ReadToClass.FluentMapping;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 using System.Collections.Generic;
