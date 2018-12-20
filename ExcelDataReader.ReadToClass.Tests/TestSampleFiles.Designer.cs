@@ -73,6 +73,16 @@ namespace ExcelDataReader.ReadToClass.Tests {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] Sample_OneSheet_Dates {
+            get {
+                object obj = ResourceManager.GetObject("Sample_OneSheet_Dates", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] Sample_OneSheet_Nullable {
             get {
                 object obj = ResourceManager.GetObject("Sample_OneSheet_Nullable", resourceCulture);

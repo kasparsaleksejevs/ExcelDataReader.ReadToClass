@@ -66,7 +66,7 @@ namespace ExcelDataReader.ReadToClass
             var columns = new List<ExcelColumn>();
             for (int i = 0; i < fieldCount; i++)
             {
-                var columnName = reader.GetString(i);
+                var columnName = reader.GetValue(i).ToString();
                 if (!string.IsNullOrEmpty(columnName) && tablePropertyData.Columns.Any(m => m.ExcelColumnName == columnName))
                     columns.Add(new ExcelColumn { ColumnIndex = i, ColumnName = columnName });
             }
@@ -124,6 +124,9 @@ namespace ExcelDataReader.ReadToClass
                 return (TResult)Convert.ChangeType(value, nullable);
             }
 
+            if (typeof(TResult) == typeof(DateTime) && value.GetType() == typeof(double))
+                return (TResult)(object)DateTime.FromOADate((double)value);
+
             if (typeof(TResult).IsEnum)
             {
                 if (value is string stringValue)
@@ -161,7 +164,7 @@ namespace ExcelDataReader.ReadToClass
             //var callExpr = Expression.Call(instance, setMethodInfo, value);
 
             var nullableUnderlyingType = Nullable.GetUnderlyingType(propertyType);
-            if (nullableUnderlyingType != null && nullableUnderlyingType.IsEnum)
+            if (nullableUnderlyingType != null)
             {
                 // IF (valueParam is null) THEN do_not_set_anything ELSE set_as_nullable_value
                 var changeTypeMethod = typeof(ExcelReaderMapper).GetMethod(nameof(ChangeToType), BindingFlags.NonPublic | BindingFlags.Static);

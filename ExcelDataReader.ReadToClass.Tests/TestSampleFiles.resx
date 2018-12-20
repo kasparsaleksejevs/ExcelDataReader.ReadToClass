@@ -121,6 +121,9 @@
   <data name="Sample_OneSheet" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\Sample_OneSheet.xlsx;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="Sample_OneSheet_Dates" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Sample_OneSheet_Dates.xlsx;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="Sample_OneSheet_Nullable" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\Sample_OneSheet_Nullable.xlsx;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
