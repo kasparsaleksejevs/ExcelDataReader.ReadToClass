@@ -63,6 +63,16 @@ namespace ExcelDataReader.ReadToClass.Tests {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] Sample_ComplexMultipleSheets {
+            get {
+                object obj = ResourceManager.GetObject("Sample_ComplexMultipleSheets", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] Sample_OneSheet {
             get {
                 object obj = ResourceManager.GetObject("Sample_OneSheet", resourceCulture);

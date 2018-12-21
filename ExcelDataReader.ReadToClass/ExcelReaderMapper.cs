@@ -46,14 +46,13 @@ namespace ExcelDataReader.ReadToClass
         delegate void PropertySetter(object instance, object propertyValue);
         delegate object ClassInstantiator();
 
-        private object ProcessTable(IExcelDataReader reader, TablePropertyData tablePropertyData /*Type tableRowType*/, bool hasHeader = true)
+        private object ProcessTable(IExcelDataReader reader, TablePropertyData tablePropertyData, bool hasHeader = true)
         {
             var tableRowType = tablePropertyData.ListElementType;
 
             var instanceCreator = CreateInstanceInitializationAction(tableRowType);
             var listAdder = CreateAddToListAction(tableRowType);
 
-            ////var propertyProcessors = new Dictionary<string, Action<object, object>>(); // could improve things...
             var propertyProcessors = new Dictionary<string, PropertySetter>();
             foreach (var property in tablePropertyData.Columns)
                 propertyProcessors.Add(property.ExcelColumnName, CreateSetPropertyAction(tableRowType, property.PropertyName));
@@ -62,16 +61,26 @@ namespace ExcelDataReader.ReadToClass
             if (hasHeader)
                 reader.Read();
 
-            var fieldCount = reader.FieldCount;
+            var fieldsToReadCount = reader.FieldCount;
+            var totalFieldCount = reader.FieldCount;
             var columns = new List<ExcelColumn>();
-            for (int i = 0; i < fieldCount; i++)
+            for (int i = 0; i < fieldsToReadCount; i++)
             {
                 var columnName = reader.GetValue(i).ToString();
                 if (!string.IsNullOrEmpty(columnName) && tablePropertyData.Columns.Any(m => m.ExcelColumnName == columnName))
                     columns.Add(new ExcelColumn { ColumnIndex = i, ColumnName = columnName });
             }
 
-            fieldCount = columns.Count;
+            if (tablePropertyData.onHeaderRead != null)
+            {
+                var rowData = new object[totalFieldCount];
+                for (int i = 0; i < totalFieldCount; i++)
+                    rowData[i] = reader.GetValue(i);
+
+                tablePropertyData.onHeaderRead(rowData);
+            }
+
+            fieldsToReadCount = columns.Count;
 
             object compatableList = Activator.CreateInstance(typeof(List<>).MakeGenericType(tableRowType));
             var row = 2; //we skipped header
@@ -95,7 +104,15 @@ namespace ExcelDataReader.ReadToClass
                         propertyProcessors[column.ColumnName](instance, null);
                         this.Errors.Add($"{formatException.Message} - ['{column.ColumnName}':{row}]");
                     }
+                }
 
+                if (tablePropertyData.onRowRead != null)
+                {
+                    var rowData = new object[totalFieldCount];
+                    for (int i = 0; i < totalFieldCount; i++)
+                        rowData[i] = reader.GetValue(i);
+
+                    tablePropertyData.onRowRead(instance, rowData);
                 }
 
                 listAdder(compatableList, instance);
@@ -302,6 +319,10 @@ namespace ExcelDataReader.ReadToClass
         public string ExcelTableName { get; set; }
 
         public List<ColumnPropertyData> Columns { get; set; } = new List<ColumnPropertyData>();
+
+        public Action<object[]> onHeaderRead;
+
+        public Action<object, object[]> onRowRead;
     }
 
     public class ColumnPropertyData
