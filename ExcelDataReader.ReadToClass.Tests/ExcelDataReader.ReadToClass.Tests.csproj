@@ -58,6 +58,7 @@
     <Reference Include="System.IO.Compression" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FluentTests\SubDataTest.cs" />
     <Compile Include="FluentTests\OneSheetDatesFluentTest.cs" />
     <Compile Include="FluentTests\OneSheetNullableFileFluentTest.cs" />
     <Compile Include="FluentTests\OneSheetNullableWithErrorsFileFluentTest.cs" />
@@ -75,6 +76,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Resources\Sample_ComplexMultipleSheets.xlsx" />
     <None Include="Resources\Sample_OneSheet.xlsx" />
     <None Include="Resources\Sample_OneSheet_Dates.xlsx" />
     <None Include="Resources\Sample_OneSheet_Nullable WithErrors.xlsx" />

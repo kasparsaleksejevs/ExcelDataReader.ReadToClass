@@ -24,5 +24,17 @@ namespace ExcelDataReader.ReadToClass.FluentMapping
 
             this.tableColumnBuilder.columnProperties.Add(propertyData);
         }
+
+        public void BindSubTable<TProperty>(string columnNameInExcel, Expression<Func<TModel, TProperty>> expression)
+        {
+            var columnProperty = (expression.Body as MemberExpression).Member as PropertyInfo;
+            var propertyData = new ColumnPropertyData
+            {
+                ExcelColumnName = columnNameInExcel,
+                PropertyName = columnProperty.Name,
+            };
+
+            this.tableColumnBuilder.columnProperties.Add(propertyData);
+        }
     }
 }
