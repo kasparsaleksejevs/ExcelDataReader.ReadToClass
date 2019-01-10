@@ -66,7 +66,7 @@ namespace ExcelDataReader.ReadToClass
             var columns = new List<ExcelColumn>();
             for (int i = 0; i < fieldsToReadCount; i++)
             {
-                var columnName = reader.GetValue(i).ToString();
+                var columnName = reader.GetValue(i)?.ToString();
                 if (!string.IsNullOrEmpty(columnName) && tablePropertyData.Columns.Any(m => m.ExcelColumnName == columnName))
                     columns.Add(new ExcelColumn { ColumnIndex = i, ColumnName = columnName });
             }
