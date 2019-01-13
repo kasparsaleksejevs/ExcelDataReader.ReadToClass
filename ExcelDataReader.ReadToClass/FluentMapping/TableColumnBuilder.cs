@@ -24,15 +24,21 @@ namespace ExcelDataReader.ReadToClass.FluentMapping
             return this;
         }
 
+        public TableColumnBuilder<TModel> StartingFromCell(string cellAddress)
+        {
+            this.tableData.StartingCellAddress = cellAddress;
+            return this;
+        }
+
         public TableColumnBuilder<TModel> OnHeaderRead(Action<object[]> action)
         {
-            tableData.onHeaderRead = action;
+            tableData.OnHeaderRead = action;
             return this;
         }
 
         public TableColumnBuilder<TModel> OnRowRead(Action<TModel, object[]> action)
         {
-            tableData.onRowRead = (model, rowData) => action((TModel)model, rowData);
+            tableData.OnRowRead = (model, rowData) => action((TModel)model, rowData);
             return this;
         }
     }

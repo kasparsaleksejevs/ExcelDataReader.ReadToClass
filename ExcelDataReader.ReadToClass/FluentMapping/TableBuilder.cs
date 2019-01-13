@@ -16,7 +16,7 @@ namespace ExcelDataReader.ReadToClass.FluentMapping
             this.containerBuilder = containerBuilder;
         }
 
-        public TableColumnBuilder<TProperty> Bind<TProperty>(string tableName, Expression<Func<TModel, ICollection<TProperty>>> expression) where TProperty : class
+        public TableColumnBuilder<TProperty> Bind<TProperty>(string excelSheetName, Expression<Func<TModel, ICollection<TProperty>>> expression) where TProperty : class
         {
             var rowListProperty = (expression.Body as MemberExpression).Member as PropertyInfo;
 
@@ -27,7 +27,7 @@ namespace ExcelDataReader.ReadToClass.FluentMapping
 
             var tableData = new TablePropertyData
             {
-                ExcelTableName = tableName,
+                ExcelSheetName = excelSheetName,
                 ListElementType = listElementType,
                 PropertyName = rowListProperty.Name,
             };
