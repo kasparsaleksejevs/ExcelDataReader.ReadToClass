@@ -93,7 +93,6 @@ namespace ExcelDataReader.ReadToClass
             }
 
             var totalFieldCount = reader.FieldCount;
-            //var fieldsToReadCount = totalFieldCount - columnOffset;
             var columns = new List<ExcelColumn>();
             for (int i = columnOffset; i < totalFieldCount; i++)
             {
@@ -102,6 +101,9 @@ namespace ExcelDataReader.ReadToClass
 
                 if (!string.IsNullOrEmpty(columnName) && propertyData != null)
                     columns.Add(new ExcelColumn { ColumnIndex = i, ColumnName = columnName, IsMandatory = propertyData.IsMandatory });
+
+                if (columns.Count >= tablePropertyData.Columns.Count)
+                    break;
             }
 
             if (tablePropertyData.OnHeaderRead != null)
