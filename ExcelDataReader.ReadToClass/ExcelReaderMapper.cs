@@ -68,13 +68,14 @@ namespace ExcelDataReader.ReadToClass
                 throw new Exception("Tables without headers are not yet supported!");
 
             var tableRowType = tablePropertyData.ListElementType;
+            var tableRowImplementationType = tablePropertyData.ListElementTypeImplementation;
 
-            var instanceCreator = CreateInstanceInitializationAction(tableRowType);
+            var instanceCreator = CreateInstanceInitializationAction(tableRowType, tableRowImplementationType);
             var listAdder = CreateAddToListAction(tableRowType);
 
             var propertyProcessors = new Dictionary<string, PropertySetter>();
             foreach (var property in tablePropertyData.Columns)
-                propertyProcessors.Add(property.ExcelColumnName, CreateSetPropertyAction(tableRowType, property.PropertyName));
+                propertyProcessors.Add(property.ExcelColumnName, CreateSetPropertyAction(tableRowImplementationType ?? tableRowType, property.PropertyName));
 
             var columnOffset = 0;
             var rowOffset = 0;
@@ -273,9 +274,19 @@ namespace ExcelDataReader.ReadToClass
         /// <param name="type">The type.</param>
         /// <returns>Compiled lambda.</returns>
         /// <remarks>https://rogerjohansson.blog/2008/02/28/linq-expressions-creating-objects/</remarks>
-        private static ClassInstantiator CreateInstanceInitializationAction(Type type)
+        private static ClassInstantiator CreateInstanceInitializationAction(Type type, Type implementationType)
         {
-            ConstructorInfo ctor = type.GetConstructors().First();
+            if (type.IsInterface && implementationType is null)
+                throw new Exception($"Implementation type for the interface {type.Name} is not specified");
+
+            ConstructorInfo ctor;
+            if (type.IsInterface)
+                ctor = implementationType.GetConstructors().FirstOrDefault();
+            else
+                ctor = type.GetConstructors().FirstOrDefault();
+
+            if (ctor is null)
+                throw new Exception($"There are no constructor for {implementationType?.Name ?? type.Name}");
 
             NewExpression newExp = Expression.New(ctor);
             LambdaExpression lambda = Expression.Lambda<ClassInstantiator>(newExp);

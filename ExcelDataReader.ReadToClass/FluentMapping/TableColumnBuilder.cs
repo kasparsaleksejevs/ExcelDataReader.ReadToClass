@@ -30,6 +30,12 @@ namespace ExcelDataReader.ReadToClass.FluentMapping
             return this;
         }
 
+        public TableColumnBuilder<TModel> ImplementingClass(Type interfaceImplementation)
+        {
+            this.tableData.ListElementTypeImplementation = interfaceImplementation;
+            return this;
+        }
+
         public TableColumnBuilder<TModel> OnHeaderRead(Action<object[]> action)
         {
             tableData.OnHeaderRead = action;

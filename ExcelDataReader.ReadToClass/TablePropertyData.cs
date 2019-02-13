@@ -18,5 +18,7 @@ namespace ExcelDataReader.ReadToClass
         public Action<object, object[]> OnRowRead;
 
         public string StartingCellAddress { get; set; }
+
+        public Type ListElementTypeImplementation { get; set; }
     }
 }
