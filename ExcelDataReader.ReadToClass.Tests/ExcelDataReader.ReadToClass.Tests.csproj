@@ -61,6 +61,7 @@
     <Compile Include="ColumnPropertyTest.cs" />
     <Compile Include="FluentTests\MultipleTablesPerSheetFluentTest.cs" />
     <Compile Include="FluentTests\OneSheetDatesFluentTest.cs" />
+    <Compile Include="FluentTests\OneSheetFileNestedDataFluentTest.cs" />
     <Compile Include="FluentTests\OneSheetNullableFileFluentTest.cs" />
     <Compile Include="FluentTests\OneSheetNullableWithErrorsFileFluentTest.cs" />
     <Compile Include="AttributeTests\OneSheetFileSkipColumnsTest.cs" />

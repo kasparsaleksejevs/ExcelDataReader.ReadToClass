@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq.Expressions;
-using System.Reflection;
 
 namespace ExcelDataReader.ReadToClass.FluentMapping
 {
@@ -22,11 +21,24 @@ namespace ExcelDataReader.ReadToClass.FluentMapping
         /// <param name="isMandatory">If set to <c>true</c> - this property is mandatory and the reading will stop on the row where the cell specified by this property is empty, even if other cells still have values.</param>
         public void Bind<TProperty>(string columnNameInExcel, Expression<Func<TModel, TProperty>> expression, bool isMandatory = false)
         {
-            var columnProperty = (expression.Body as MemberExpression).Member as PropertyInfo;
+            var name = string.Empty;
+
+            var body = expression.Body as MemberExpression;
+            while (body != null && body.NodeType == ExpressionType.MemberAccess)
+            {
+                if (name.Length > 0)
+                    name = body.Member.Name + "." + name;
+                else
+                    name = body.Member.Name;
+
+                body = body.Expression as MemberExpression;
+            }
+
+            // var columnProperty = (expression.Body as MemberExpression).Member as PropertyInfo;
             var propertyData = new ColumnPropertyData
             {
                 ExcelColumnName = columnNameInExcel,
-                PropertyName = columnProperty.Name,
+                PropertyName = name,
                 IsMandatory = isMandatory
             };
 

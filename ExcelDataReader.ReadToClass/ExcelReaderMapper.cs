@@ -101,7 +101,7 @@ namespace ExcelDataReader.ReadToClass
                 var propertyData = tablePropertyData.Columns.FirstOrDefault(m => m.ExcelColumnName == columnName);
 
                 if (!string.IsNullOrEmpty(columnName) && propertyData != null)
-                    columns.Add(new ExcelColumn { ColumnIndex = i, ColumnName = columnName, IsMandatory = propertyData.IsMandatory });
+                    columns.Add(new ExcelColumn { ColumnIndex = i, ColumnName = columnName, IsMandatory = propertyData.IsMandatory, PropertyName = propertyData.PropertyName });
 
                 if (columns.Count >= tablePropertyData.Columns.Count)
                     break;
@@ -145,6 +145,10 @@ namespace ExcelDataReader.ReadToClass
                     {
                         propertyProcessors[column.ColumnName](instance, null);
                         this.Errors.Add($"{formatException.Message} - ['{column.ColumnName}':{rowIndex}]");
+                    }
+                    catch (NullReferenceException nullRefException)
+                    {
+                        throw new NullReferenceException($"{column.PropertyName} instance is null. Ensure that instance can be initialized (if it is an interface - specify implementation class with 'ImplementingClass()' method, if it is a nested property - ensure it is auto-initialized).");
                     }
                 }
 
@@ -209,15 +213,22 @@ namespace ExcelDataReader.ReadToClass
         /// <remarks>https://stackoverflow.com/questions/3475199/how-to-dynamically-set-a-property-of-a-class-without-using-reflection-with-dyna</remarks>
         private static PropertySetter CreateSetPropertyAction(Type propertyContainerType, string propertyName)
         {
-            var propertyInfo = propertyContainerType.GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
-            var setMethodInfo = propertyInfo.GetSetMethod();
-            //var propertyType = Nullable.GetUnderlyingType(propertyInfo.PropertyType) ?? propertyInfo.PropertyType;
-            var propertyType = propertyInfo.PropertyType;
-
             var instanceParam = Expression.Parameter(typeof(object), "containerInstance");
             var valueParam = Expression.Parameter(typeof(object), "valueToSet");
 
-            var instance = Expression.Convert(instanceParam, propertyContainerType);
+            // instanceParam is 'object' and does not contain properties we need, so we convert it to our instance type (which it should be already)
+            var instanceExpr = Expression.Convert(instanceParam, propertyContainerType);
+
+            // getting reference to the static method that handles data type changes (double to decimal, etc)
+            var changeTypeMethod = typeof(ExcelReaderMapper).GetMethod(nameof(ChangeToType), BindingFlags.NonPublic | BindingFlags.Static);
+
+            if (propertyName.Contains("."))
+                return CreateNestedSetPropertyAction(propertyContainerType, propertyName, instanceParam, valueParam, instanceExpr, changeTypeMethod);
+
+            var propertyInfo = propertyContainerType.GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
+            var setMethodInfo = propertyInfo.GetSetMethod();
+            var propertyType = propertyInfo.PropertyType;
+
             //Expression value;
             //if (propertyType.IsValueType)
             //    value = Expression.Convert(Expression.Unbox(valueParam, {typeof(valueParam)}), propertyType);  // <- obvoiusly this doesnt quite work as we need unbox from object to the boxed type. 
@@ -229,20 +240,67 @@ namespace ExcelDataReader.ReadToClass
             if (nullableUnderlyingType != null)
             {
                 // IF (valueParam is null) THEN do_not_set_anything ELSE set_as_nullable_value
-                var changeTypeMethod = typeof(ExcelReaderMapper).GetMethod(nameof(ChangeToType), BindingFlags.NonPublic | BindingFlags.Static);
                 var changeTypeMethodGeneric = changeTypeMethod.MakeGenericMethod(nullableUnderlyingType);
                 var changeTypeExpr = Expression.Call(changeTypeMethodGeneric, valueParam);
-                var setPropertyExpression = Expression.Call(instance, setMethodInfo, Expression.Convert(changeTypeExpr, propertyType));
+                var setPropertyExpression = Expression.Call(instanceExpr, setMethodInfo, Expression.Convert(changeTypeExpr, propertyType));
                 var emptyLambda = Expression.Empty();
                 var checkExpr = Expression.IfThenElse(Expression.Equal(Expression.Constant(null, typeof(object)), valueParam), emptyLambda, setPropertyExpression);
                 return Expression.Lambda<PropertySetter>(checkExpr, instanceParam, valueParam).Compile();
             }
             else
             {
-                var changeTypeMethod = typeof(ExcelReaderMapper).GetMethod(nameof(ChangeToType), BindingFlags.NonPublic | BindingFlags.Static);
                 var changeTypeMethodGeneric = changeTypeMethod.MakeGenericMethod(propertyType);
                 var changeTypeExpr = Expression.Call(changeTypeMethodGeneric, valueParam);
-                var setPropertyExpression = Expression.Call(instance, setMethodInfo, changeTypeExpr);
+                var setPropertyExpression = Expression.Call(instanceExpr, setMethodInfo, changeTypeExpr);
+                return Expression.Lambda<PropertySetter>(setPropertyExpression, instanceParam, valueParam).Compile();
+            }
+        }
+
+        /// <summary>
+        /// Creates the 'set property' action for the specified class and property.
+        /// </summary>
+        /// <param name="propertyContainerType">Type of the class containing the property.</param>
+        /// <param name="propertyName">Name of the property to set (e.g., 'SubClass.Property1').</param>
+        /// <param name="instanceParam">The instance parameter.</param>
+        /// <param name="valueParam">The value parameter.</param>
+        /// <param name="instanceExpr">The instance expr.</param>
+        /// <param name="changeTypeMethod">The change type method.</param>
+        /// <returns>Compiled lambda expression to set property to specified value.</returns>
+        private static PropertySetter CreateNestedSetPropertyAction(Type propertyContainerType, string propertyName, ParameterExpression instanceParam, ParameterExpression valueParam, UnaryExpression instanceExpr, MethodInfo changeTypeMethod)
+        {
+            var sourceType = propertyContainerType;
+            var splitPropertyNames = propertyName.Split('.');
+            PropertyInfo innerPropertyInfo = null;
+            for (int i = 0; i < splitPropertyNames.Length; i++)
+            {
+                var innerPropertyName = splitPropertyNames[i];
+                innerPropertyInfo = sourceType.GetProperty(innerPropertyName, BindingFlags.Instance | BindingFlags.Public);
+                sourceType = innerPropertyInfo.PropertyType;
+            }
+
+            // at this point we have 'innerPropertyInfo' pointing to the target nested-property (e.g., 'Prop1' in 'mainClass.SubClass.Prop1')
+            var propertyType = innerPropertyInfo.PropertyType;
+            var setMethodInfo = innerPropertyInfo.GetSetMethod();
+
+            // create expression from property names to reference target property container instance (e.g.,  'e => e.SubClass')
+            var propertyAccessExpr = splitPropertyNames.Take(splitPropertyNames.Length - 1).Aggregate<string, Expression>(instanceExpr, (c, m) => Expression.Property(c, m));
+
+            var nullableUnderlyingType = Nullable.GetUnderlyingType(propertyType);
+            if (nullableUnderlyingType != null)
+            {
+                // IF (valueParam is null) THEN do_not_set_anything ELSE set_as_nullable_value
+                var changeTypeMethodGeneric = changeTypeMethod.MakeGenericMethod(nullableUnderlyingType);
+                var changeTypeExpr = Expression.Call(changeTypeMethodGeneric, valueParam);
+                var setPropertyExpression = Expression.Call(propertyAccessExpr, setMethodInfo, Expression.Convert(changeTypeExpr, propertyType));
+                var emptyLambda = Expression.Empty();
+                var checkExpr = Expression.IfThenElse(Expression.Equal(Expression.Constant(null, typeof(object)), valueParam), emptyLambda, setPropertyExpression);
+                return Expression.Lambda<PropertySetter>(checkExpr, instanceParam, valueParam).Compile();
+            }
+            else
+            {
+                var changeTypeMethodGeneric = changeTypeMethod.MakeGenericMethod(innerPropertyInfo.PropertyType);
+                var changeTypeExpr = Expression.Call(changeTypeMethodGeneric, valueParam);
+                var setPropertyExpression = Expression.Call(propertyAccessExpr, setMethodInfo, changeTypeExpr);
                 return Expression.Lambda<PropertySetter>(setPropertyExpression, instanceParam, valueParam).Compile();
             }
         }
@@ -366,6 +424,8 @@ namespace ExcelDataReader.ReadToClass
             public string ColumnName { get; set; }
 
             public bool IsMandatory { get; set; }
+
+            public string PropertyName { get; set; }
         }
     }
 }
